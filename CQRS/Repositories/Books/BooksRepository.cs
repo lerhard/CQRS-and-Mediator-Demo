@@ -1,5 +1,5 @@
+using MediatR.API.DTOs;
 using MediatR.API.Entities;
-using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace MediatR.API.Repositories.Books;
 
@@ -12,27 +12,31 @@ public class BooksRepository : IBooksRepository
         CreateBooksIfNotExists();
     }
 
-    public IList<Book> GetAll()
+    public async Task<IList<Book>> GetAll()
     {
-        CreateBooksIfNotExists();
+        await Task.Run(() => CreateBooksIfNotExists());
         return _books;
     }
 
-    public Book GetById(int id)
+    public async Task<Book> GetById(int id)
     {
         CreateBooksIfNotExists();
-        return _books.FirstOrDefault(x => x.Id == id);
+        return await Task.Run(() => _books.FirstOrDefault(x => x.Id == id));
     }
 
-    public bool Update(Book book)
+    public async Task<bool> Update(BookDTO bookDTO, int id)
     {
-        if (book is null) throw new ArgumentNullException("book");
+
+        
+        if (bookDTO is null) throw new ArgumentNullException("book");
+        if (id is default(int)) throw new ArgumentException("id cannot  be 0");
+        
+        Book book = new(id, bookDTO.Name, bookDTO.Category);
         CreateBooksIfNotExists();
-        
-        Book oldBook =  _books.FirstOrDefault(x => x.Id == book.Id);
+        Book oldBook = await Task.Run(() => _books.FirstOrDefault(x => x.Id == book.Id));
         if (oldBook is null) throw new NullReferenceException("Book cannot be updated: it doesn't exists");
-        int index = _books.IndexOf(oldBook);
-        
+        int index = await Task.Run(() => _books.IndexOf(oldBook));
+
         oldBook.ChangeName(book.Name);
         oldBook.ChangeCategory(book.Category);
         _books[index] = oldBook;
@@ -40,28 +44,29 @@ public class BooksRepository : IBooksRepository
         return true;
     }
 
-    public bool Delete(int id)
+    public async Task<bool> Delete(int id)
     {
         if (id is 0) throw new ArgumentException("id cannot be '0'");
         CreateBooksIfNotExists();
 
-        Book book = _books.FirstOrDefault(x => x.Id == id);
+        Book book =  await Task.Run (() =>_books.FirstOrDefault(x => x.Id == id));
         if (book is null) throw new NullReferenceException("This book doesn't exists");
 
         return _books.Remove(book);
     }
 
-    public bool Insert(Book book)
+    public async Task<bool> Insert(BookDTO bookDTO)
     {
-        if (book is null) throw new ArgumentNullException("book");
+        if (bookDTO is null) throw new ArgumentNullException("book");
+
+        Book book = new Book(bookDTO.Name, bookDTO.Category);
         CreateBooksIfNotExists();
 
         if (book.Id is default(int))
             book.ChangeId(_books.Count + 1);
-        
-        _books.Add(book);
-        return true;
 
+        await Task.Run(() => _books.Add(book));
+        return true;
     }
 
     private void CreateBooksIfNotExists()
@@ -73,4 +78,5 @@ public class BooksRepository : IBooksRepository
         _books.Add(new Book(2, "Memórias Póstumas de Brás Cubas", "Romance"));
         _books.Add(new Book(3, "Memórias de Um sargento de milícias", "Romance"));
     }
+    
 }

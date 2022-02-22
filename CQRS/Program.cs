@@ -1,3 +1,5 @@
+using System.Reflection;
+using MediatR;
 using MediatR.API.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +12,8 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddRepositories();
 
+builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
+ 
 builder.Services.AddSwaggerGen();
 
 
